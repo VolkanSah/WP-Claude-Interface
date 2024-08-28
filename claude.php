@@ -3,7 +3,7 @@
  * Plugin Name: Claude Chat Interface
  * Description: Adds a Claude AI chat interface to your WordPress site using a shortcode.
  * Version: 1.0
- * Author: Volkan Kücükbudak
+ * Author: 
  */
 
 // Register settings
