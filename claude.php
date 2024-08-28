@@ -6,6 +6,15 @@
  * Author: Volkan Kücükbudak
  */
 
+// Register settings
+function claude_chat_register_settings() {
+    register_setting('claude_chat_options', 'claude_chat_api_key');
+    register_setting('claude_chat_options', 'claude_chat_model');
+    register_setting('claude_chat_options', 'claude_chat_temperature');
+    register_setting('claude_chat_options', 'claude_chat_max_tokens');
+}
+add_action('admin_init', 'claude_chat_register_settings');
+
 // Enqueue necessary scripts and styles
 function claude_chat_enqueue_scripts() {
     wp_enqueue_style('claude-chat-style', plugin_dir_url(__FILE__) . 'css/claude-chat.css');
@@ -45,15 +54,130 @@ function claude_chat_ajax_handler() {
 add_action('wp_ajax_claude_chat', 'claude_chat_ajax_handler');
 add_action('wp_ajax_nopriv_claude_chat', 'claude_chat_ajax_handler');
 
-// Add settings page in WordPress admin
-function claude_chat_settings_page() {
-    add_options_page('Claude Chat Settings', 'Claude Chat', 'manage_options', 'claude-chat-settings', 'claude_chat_settings_page_html');
-}
-add_action('admin_menu', 'claude_chat_settings_page');
-
-// Settings page HTML
 function claude_chat_settings_page_html() {
-    // TODO: Implement settings form (API key, model selection, etc.)
-    echo '<h2>Claude Chat Settings</h2>';
-    echo '<p>Configure your Claude API settings here.</p>';
+    ?>
+    <div class="wrap">
+        <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
+        <form action="options.php" method="post">
+            <?php
+            settings_fields('claude_chat_options');
+            do_settings_sections('claude-chat-settings');
+            submit_button('Save Settings');
+            ?>
+        </form>
+    </div>
+    <?php
 }
+
+function claude_chat_settings_init() {
+    add_settings_section(
+        'claude_chat_settings_section',
+        'Claude API Settings',
+        'claude_chat_settings_section_callback',
+        'claude-chat-settings'
+    );
+
+    add_settings_field(
+        'claude_chat_api_key',
+        'API Key',
+        'claude_chat_text_field_callback',
+        'claude-chat-settings',
+        'claude_chat_settings_section',
+        array('label_for' => 'claude_chat_api_key')
+    );
+
+    add_settings_field(
+        'claude_chat_model',
+        'Model',
+        'claude_chat_text_field_callback',
+        'claude-chat-settings',
+        'claude_chat_settings_section',
+        array('label_for' => 'claude_chat_model')
+    );
+
+    add_settings_field(
+        'claude_chat_temperature',
+        'Temperature',
+        'claude_chat_number_field_callback',
+        'claude-chat-settings',
+        'claude_chat_settings_section',
+        array('label_for' => 'claude_chat_temperature', 'min' => 0, 'max' => 1, 'step' => 0.1)
+    );
+
+    add_settings_field(
+        'claude_chat_max_tokens',
+        'Max Tokens',
+        'claude_chat_number_field_callback',
+        'claude-chat-settings',
+        'claude_chat_settings_section',
+        array('label_for' => 'claude_chat_max_tokens', 'min' => 1, 'max' => 2048)
+    );
+}
+add_action('admin_init', 'claude_chat_settings_init');
+
+function claude_chat_settings_section_callback($args) {
+    echo '<p>Enter your Claude API settings below:</p>';
+}
+
+function claude_chat_text_field_callback($args) {
+    $option = get_option($args['label_for']);
+    echo '<input type="text" id="' . esc_attr($args['label_for']) . '" name="' . esc_attr($args['label_for']) . '" value="' . esc_attr($option) . '" class="regular-text">';
+}
+function claude_chat_number_field_callback($args) {
+    $option = get_option($args['label_for']);
+    echo '<input type="number" id="' . esc_attr($args['label_for']) . '" name="' . esc_attr($args['label_for']) . '" value="' . esc_attr($option) . '" class="regular-text" min="' . esc_attr($args['min']) . '" max="' . esc_attr($args['max']) . '" step="' . (isset($args['step']) ? esc_attr($args['step']) : '1') . '">';
+}
+
+function claude_chat_api_request($message) {
+    $api_key = get_option('claude_chat_api_key');
+    $model = get_option('claude_chat_model');
+    $temperature = get_option('claude_chat_temperature');
+    $max_tokens = get_option('claude_chat_max_tokens');
+
+    $url = 'https://api.anthropic.com/v1/completions';
+
+    $headers = array(
+        'Content-Type' => 'application/json',
+        'Authorization' => 'Bearer ' . $api_key,
+    );
+
+    $body = array(
+        'model' => $model,
+        'prompt' => $message,
+        'max_tokens_to_sample' => intval($max_tokens),
+        'temperature' => floatval($temperature),
+    );
+
+    $response = wp_remote_post($url, array(
+        'headers' => $headers,
+        'body' => json_encode($body),
+        'timeout' => 60,
+    ));
+
+    if (is_wp_error($response)) {
+        return 'Error: ' . $response->get_error_message();
+    }
+
+    $body = wp_remote_retrieve_body($response);
+    $data = json_decode($body, true);
+
+    if (isset($data['completion'])) {
+        return $data['completion'];
+    } else {
+        return 'Error: Unable to get a response from Claude API';
+    }
+}
+
+function claude_chat_ajax_handler() {
+    check_ajax_referer('claude-chat-nonce', 'nonce');
+    
+    $message = sanitize_text_field($_POST['message']);
+    
+    $response = claude_chat_api_request($message);
+    
+    wp_send_json_success($response);
+}
+
+
+
+
