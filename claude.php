@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name: Claude Chat Interface
+ * Plugin Name: Claude 3.x Chat Interface
  * Description: Adds a Claude AI chat interface to your WordPress site using a shortcode.
  * Version: 1.0
- * Author: 
+ * Author: Volkan Kücükbudak
  */
 
 // Definiere die verfügbaren Modelle
@@ -78,22 +78,16 @@ function claude_chat_api_request($message) {
     $headers = array(
         'Content-Type' => 'application/json',
         'x-api-key' => $api_key,
+        'anthropic-version' => '2023-06-01', // Beispielhafte API-Version, an die tatsächliche Version anpassen
     );
 
     $body = array(
         'model' => $model,
         'max_tokens' => intval($max_tokens),
-        'temperature' => floatval($temperature),
-        'system' => 'You are a world-class poet. Respond only with short poems.',
         'messages' => array(
             array(
                 'role' => 'user',
-                'content' => array(
-                    array(
-                        'type' => 'text',
-                        'text' => $message
-                    )
-                )
+                'content' => $message
             )
         )
     );
@@ -112,14 +106,14 @@ function claude_chat_api_request($message) {
     $body = wp_remote_retrieve_body($response);
     $data = json_decode($body, true);
 
-    if (isset($data['completion'])) {
-        return $data['completion'];
+    if (isset($data['content'][0]['text'])) {
+        return $data['content'][0]['text'];
     } elseif (isset($data['error'])) {
         claude_chat_log_error('API Error', print_r($data, true));
         return 'API Error: ' . $data['error']['message'];
     } else {
         claude_chat_log_error('Unknown Error', 'Unable to get a response from Claude API. Response: ' . print_r($data, true));
-        return 'Error: Unable to get a response from Claude API. Response: ' . print_r($data, true);
+        return 'Error: Unable to get a response from Claude API.';
     }
 }
 
