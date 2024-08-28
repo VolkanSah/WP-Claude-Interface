@@ -1,5 +1,16 @@
 # Claude Chat Interface
 
+
+
+    Claude 3 Family:
+        Claude 3 Haiku: claude-3-haiku-20240307
+        Claude 3 Sonnet: claude-3-sonnet-20240229
+        Claude 3 Opus: claude-3-opus-20240229
+
+    Claude 3.5 Family:
+        Claude 3.5 Sonnet: claude-3-5-sonnet-20240620
+
+
 A WordPress plugin that integrates the Claude AI chat interface into your website using a shortcode.
 
 ## Features
