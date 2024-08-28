@@ -1,0 +1,50 @@
+/* css/claude-chat.css */
+#claude-chat-interface {
+    max-width: 600px;
+    margin: 0 auto;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+#claude-chat-messages {
+    height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+    background-color: #f9f9f9;
+}
+
+.user-message, .claude-message {
+    margin-bottom: 10px;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+.user-message {
+    background-color: #e6f2ff;
+    text-align: right;
+}
+
+.claude-message {
+    background-color: #f0f0f0;
+}
+
+#claude-chat-input {
+    width: calc(100% - 80px);
+    padding: 10px;
+    border: none;
+    border-top: 1px solid #ccc;
+}
+
+#claude-chat-submit {
+    width: 80px;
+    padding: 10px;
+    border: none;
+    background-color: #4CAF50;
+    color: white;
+    cursor: pointer;
+}
+
+#claude-chat-submit:hover {
+    background-color: #45a049;
+}
