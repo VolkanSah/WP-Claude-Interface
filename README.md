@@ -1,4 +1,4 @@
-# Claude Chat Interface
+# Claude Chat Interface (WordPress Plugin)
 
 
 
