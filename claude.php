@@ -6,6 +6,14 @@
  * Author: 
  */
 
+// Definiere die verfügbaren Modelle
+define('CLAUDE_MODELS', [
+    'claude-3-haiku-20240307' => 'Claude 3 Haiku',
+    'claude-3-sonnet-20240229' => 'Claude 3 Sonnet',
+    'claude-3-opus-20240229' => 'Claude 3 Opus',
+    'claude-3-5-sonnet-20240620' => 'Claude 3.5 Sonnet'
+]);
+
 // Register settings
 function claude_chat_register_settings() {
     register_setting('claude_chat_options', 'claude_chat_api_key');
@@ -48,30 +56,46 @@ function claude_chat_ajax_handler() {
     
     $response = claude_chat_api_request($message);
     
-    wp_send_json_success($response);
+    if ($response) {
+        wp_send_json_success($response);
+    } else {
+        wp_send_json_error('Error: No response from API');
+    }
 }
 add_action('wp_ajax_claude_chat', 'claude_chat_ajax_handler');
 add_action('wp_ajax_nopriv_claude_chat', 'claude_chat_ajax_handler');
 
-// Claude API request function
+// Claude API request function with logging
 function claude_chat_api_request($message) {
     $api_key = get_option('claude_chat_api_key');
     $model = get_option('claude_chat_model');
     $temperature = get_option('claude_chat_temperature');
     $max_tokens = get_option('claude_chat_max_tokens');
 
-    $url = 'https://api.anthropic.com/v1/completions';
+    // Verwende den richtigen API-Endpunkt
+    $url = 'https://api.anthropic.com/v1/messages';
 
     $headers = array(
         'Content-Type' => 'application/json',
-        'Authorization' => 'Bearer ' . $api_key,
+        'x-api-key' => $api_key,
     );
 
     $body = array(
         'model' => $model,
-        'prompt' => $message,
-        'max_tokens_to_sample' => intval($max_tokens),
+        'max_tokens' => intval($max_tokens),
         'temperature' => floatval($temperature),
+        'system' => 'You are a world-class poet. Respond only with short poems.',
+        'messages' => array(
+            array(
+                'role' => 'user',
+                'content' => array(
+                    array(
+                        'type' => 'text',
+                        'text' => $message
+                    )
+                )
+            )
+        )
     );
 
     $response = wp_remote_post($url, array(
@@ -81,6 +105,7 @@ function claude_chat_api_request($message) {
     ));
 
     if (is_wp_error($response)) {
+        claude_chat_log_error('HTTP Error', $response->get_error_message());
         return 'Error: ' . $response->get_error_message();
     }
 
@@ -89,9 +114,20 @@ function claude_chat_api_request($message) {
 
     if (isset($data['completion'])) {
         return $data['completion'];
+    } elseif (isset($data['error'])) {
+        claude_chat_log_error('API Error', print_r($data, true));
+        return 'API Error: ' . $data['error']['message'];
     } else {
-        return 'Error: Unable to get a response from Claude API';
+        claude_chat_log_error('Unknown Error', 'Unable to get a response from Claude API. Response: ' . print_r($data, true));
+        return 'Error: Unable to get a response from Claude API. Response: ' . print_r($data, true);
     }
+}
+
+// Logging function
+function claude_chat_log_error($error_type, $error_message) {
+    $log_message = date('Y-m-d H:i:s') . " - $error_type: $error_message\n";
+    $log_file = plugin_dir_path(__FILE__) . 'claude-chat-error.log';
+    error_log($log_message, 3, $log_file);
 }
 
 // Add settings page
@@ -137,7 +173,7 @@ function claude_chat_settings_init() {
     add_settings_field(
         'claude_chat_model',
         'Model',
-        'claude_chat_text_field_callback',
+        'claude_chat_model_dropdown_callback',
         'claude-chat-settings',
         'claude_chat_settings_section',
         array('label_for' => 'claude_chat_model')
@@ -175,4 +211,14 @@ function claude_chat_text_field_callback($args) {
 function claude_chat_number_field_callback($args) {
     $option = get_option($args['label_for']);
     echo '<input type="number" id="' . esc_attr($args['label_for']) . '" name="' . esc_attr($args['label_for']) . '" value="' . esc_attr($option) . '" class="regular-text" min="' . esc_attr($args['min']) . '" max="' . esc_attr($args['max']) . '" step="' . (isset($args['step']) ? esc_attr($args['step']) : '1') . '">';
+}
+
+function claude_chat_model_dropdown_callback($args) {
+    $selected_model = get_option($args['label_for']);
+    echo '<select id="' . esc_attr($args['label_for']) . '" name="' . esc_attr($args['label_for']) . '" class="regular-text">';
+    foreach (CLAUDE_MODELS as $model_key => $model_name) {
+        $selected = ($selected_model == $model_key) ? 'selected="selected"' : '';
+        echo '<option value="' . esc_attr($model_key) . '" ' . $selected . '>' . esc_html($model_name) . '</option>';
+    }
+    echo '</select>';
 }
