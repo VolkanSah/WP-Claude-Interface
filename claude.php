@@ -46,14 +46,61 @@ function claude_chat_ajax_handler() {
     
     $message = sanitize_text_field($_POST['message']);
     
-    // TODO: Implement actual API call to Claude
-    $response = "This is where we'd call the Claude API with the message: " . $message;
+    $response = claude_chat_api_request($message);
     
     wp_send_json_success($response);
 }
 add_action('wp_ajax_claude_chat', 'claude_chat_ajax_handler');
 add_action('wp_ajax_nopriv_claude_chat', 'claude_chat_ajax_handler');
 
+// Claude API request function
+function claude_chat_api_request($message) {
+    $api_key = get_option('claude_chat_api_key');
+    $model = get_option('claude_chat_model');
+    $temperature = get_option('claude_chat_temperature');
+    $max_tokens = get_option('claude_chat_max_tokens');
+
+    $url = 'https://api.anthropic.com/v1/completions';
+
+    $headers = array(
+        'Content-Type' => 'application/json',
+        'Authorization' => 'Bearer ' . $api_key,
+    );
+
+    $body = array(
+        'model' => $model,
+        'prompt' => $message,
+        'max_tokens_to_sample' => intval($max_tokens),
+        'temperature' => floatval($temperature),
+    );
+
+    $response = wp_remote_post($url, array(
+        'headers' => $headers,
+        'body' => json_encode($body),
+        'timeout' => 60,
+    ));
+
+    if (is_wp_error($response)) {
+        return 'Error: ' . $response->get_error_message();
+    }
+
+    $body = wp_remote_retrieve_body($response);
+    $data = json_decode($body, true);
+
+    if (isset($data['completion'])) {
+        return $data['completion'];
+    } else {
+        return 'Error: Unable to get a response from Claude API';
+    }
+}
+
+// Add settings page
+function claude_chat_settings_page() {
+    add_options_page('Claude Chat Settings', 'Claude Chat', 'manage_options', 'claude-chat-settings', 'claude_chat_settings_page_html');
+}
+add_action('admin_menu', 'claude_chat_settings_page');
+
+// Settings page HTML
 function claude_chat_settings_page_html() {
     ?>
     <div class="wrap">
@@ -69,6 +116,7 @@ function claude_chat_settings_page_html() {
     <?php
 }
 
+// Initialize settings
 function claude_chat_settings_init() {
     add_settings_section(
         'claude_chat_settings_section',
@@ -123,61 +171,8 @@ function claude_chat_text_field_callback($args) {
     $option = get_option($args['label_for']);
     echo '<input type="text" id="' . esc_attr($args['label_for']) . '" name="' . esc_attr($args['label_for']) . '" value="' . esc_attr($option) . '" class="regular-text">';
 }
+
 function claude_chat_number_field_callback($args) {
     $option = get_option($args['label_for']);
     echo '<input type="number" id="' . esc_attr($args['label_for']) . '" name="' . esc_attr($args['label_for']) . '" value="' . esc_attr($option) . '" class="regular-text" min="' . esc_attr($args['min']) . '" max="' . esc_attr($args['max']) . '" step="' . (isset($args['step']) ? esc_attr($args['step']) : '1') . '">';
 }
-
-function claude_chat_api_request($message) {
-    $api_key = get_option('claude_chat_api_key');
-    $model = get_option('claude_chat_model');
-    $temperature = get_option('claude_chat_temperature');
-    $max_tokens = get_option('claude_chat_max_tokens');
-
-    $url = 'https://api.anthropic.com/v1/completions';
-
-    $headers = array(
-        'Content-Type' => 'application/json',
-        'Authorization' => 'Bearer ' . $api_key,
-    );
-
-    $body = array(
-        'model' => $model,
-        'prompt' => $message,
-        'max_tokens_to_sample' => intval($max_tokens),
-        'temperature' => floatval($temperature),
-    );
-
-    $response = wp_remote_post($url, array(
-        'headers' => $headers,
-        'body' => json_encode($body),
-        'timeout' => 60,
-    ));
-
-    if (is_wp_error($response)) {
-        return 'Error: ' . $response->get_error_message();
-    }
-
-    $body = wp_remote_retrieve_body($response);
-    $data = json_decode($body, true);
-
-    if (isset($data['completion'])) {
-        return $data['completion'];
-    } else {
-        return 'Error: Unable to get a response from Claude API';
-    }
-}
-
-function claude_chat_ajax_handler() {
-    check_ajax_referer('claude-chat-nonce', 'nonce');
-    
-    $message = sanitize_text_field($_POST['message']);
-    
-    $response = claude_chat_api_request($message);
-    
-    wp_send_json_success($response);
-}
-
-
-
-
