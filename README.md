@@ -58,6 +58,13 @@ Go to 'Settings' > 'Claude Chat' in the WordPress admin panel to configure the f
 - **PHP**: Version 7.0 or higher.
 - **Claude API Key**: A valid Claude API key is required.
 
+
+### Screenshots
+#### Public View
+![Claude 3 WordPress Plugin](claude3.png)
+#### Settings
+![Claude 3 WordPress Pöugin](claude_set.png)
+
 ## Support
 
 For support, feature requests, or to report issues, please open an issue on the GitHub repository.
@@ -69,9 +76,3 @@ This plugin is licensed under the DBAD License.
 ## Copyright
 
 **Volkan Sah**
-
-### Screenshots
-#### Public View
-![Claude 3 WordPress Plugin](claude3.png)
-#### Settings
-![Claude 3 WordPress Pöugin](claude_set.png)
