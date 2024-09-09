@@ -71,5 +71,7 @@ This plugin is licensed under the DBAD License.
 **Volkan Sah**
 
 ### Screenshots
+#### Public View
 ![Claude 3 WordPress Plugin](claude3.png)
+#### Settings
 ![Claude 3 WordPress Pöugin](claude_set.png)
