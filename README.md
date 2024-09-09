@@ -5,6 +5,8 @@
 
 Integrate the Claude AI chat interface into your WordPress website using a simple shortcode.
 
+![Claude 3 WordPress Pöugin](claude3.png)
+
 ## Claude Models
 
 ### Claude 3 Family:
