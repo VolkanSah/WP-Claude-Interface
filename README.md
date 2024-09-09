@@ -5,7 +5,6 @@
 
 Integrate the Claude AI chat interface into your WordPress website using a simple shortcode.
 
-![Claude 3 WordPress Pöugin](claude3.png)
 
 ## Claude Models
 
@@ -70,3 +69,7 @@ This plugin is licensed under the DBAD License.
 ## Copyright
 
 **Volkan Sah**
+
+### Screenshots
+![Claude 3 WordPress Plugin](claude3.png)
+![Claude 3 WordPress Pöugin](claude_set.png)
