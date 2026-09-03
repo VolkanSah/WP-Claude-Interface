@@ -9,9 +9,11 @@
 
 #claude-chat-messages {
     height: 400px;
-    overflow-y: auto;
+    min-height: 100px;
+    overflow-y: scroll;
     padding: 10px;
     background-color: #f9f9f9;
+    resize: vertical;
 }
 
 .user-message, .claude-message {
@@ -34,6 +36,15 @@
     padding: 10px;
     border: none;
     border-top: 1px solid #ccc;
+    resize: vertical;
+    min-height: 3em;
+    height: 4.5em; /* ~3 lines */
+    box-sizing: border-box;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: 1.5;
+    vertical-align: top;
+    overflow-y: auto;
 }
 
 #claude-chat-submit {
@@ -43,6 +54,7 @@
     background-color: #4CAF50;
     color: white;
     cursor: pointer;
+    vertical-align: top;
 }
 
 #claude-chat-submit:hover {
